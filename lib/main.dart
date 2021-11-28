@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -23,13 +25,32 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   static const MethodChannel _channel =
-  const MethodChannel('com.example.methodchanneltest');
+      const MethodChannel('com.example.my_flutter');
 
   String _platformVersion = 'Unknown';
+  String _batteryLevel = 'Unknown battery level.';
 
-  Future<String> getPlatformVersion() async {
+  Future<void> getPlatformVersion() async {
     final String version = await _channel.invokeMethod('getPlatformVersion');
-    return version;
+
+    setState(() {
+      _platformVersion = version;
+    });
+  }
+
+  Future<void> getBatteryLevel() async {
+    String batteryLevel;
+    try {
+      final int result = await _channel.invokeMethod('getBatteryLevel');
+
+      batteryLevel = 'Battery level at $result % .';
+    } on PlatformException catch (e) {
+      batteryLevel = "Failed to get battery level: '${e.message}'.";
+    }
+
+    setState(() {
+      _batteryLevel = batteryLevel;
+    });
   }
 
   @override
@@ -44,14 +65,14 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             RaisedButton(
               child: Text("Get Platform Version"),
-              onPressed: () async {
-                String result = await getPlatformVersion();
-                setState(() {
-                  _platformVersion = result;
-                });
-              },
+              onPressed: getPlatformVersion,
             ),
             Text(_platformVersion),
+            RaisedButton(
+              child: Text("Get Battery Level"),
+              onPressed: getBatteryLevel,
+            ),
+            Text(_batteryLevel),
           ],
         ),
       ),
